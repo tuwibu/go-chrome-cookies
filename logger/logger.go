@@ -1,4 +1,4 @@
-package logrus
+package logger
 
 import (
 	"context"
@@ -155,13 +155,13 @@ func (l *LogrusLogger) Builder() Logger {
 	return l
 }
 
-func LogrusLoggerWithContext(ctx *context.Context) *LogrusLogger {
+func WithContext(ctx *context.Context) *LogrusLogger {
 	var logger *LogrusLogger
 	if ctx != nil {
 		if loggerCtx, ok := (*ctx).Value("logger").(*LogrusLogger); ok {
 			logger = loggerCtx
 		} else {
-			logger = NewLogrusLogger()
+			logger = NewLogger()
 		}
 
 		if commonFields, ok := (*ctx).Value("commonFields").(map[string]interface{}); ok {
@@ -176,7 +176,7 @@ func LogrusLoggerWithContext(ctx *context.Context) *LogrusLogger {
 
 }
 
-func InitLogrusLogger() {
+func InitLogger() {
 	loggerInit = logrus.New()
 	customFormatter := &CustomTextFormatter{}
 	// Set the custom formatter as the formatter for the logger
@@ -184,7 +184,7 @@ func InitLogrusLogger() {
 	loggerInit.SetLevel(logrus.TraceLevel)
 }
 
-func NewLogrusLogger() *LogrusLogger {
+func NewLogger() *LogrusLogger {
 	loggerNew := loggerInit
 	return &LogrusLogger{logger: loggerNew}
 }
