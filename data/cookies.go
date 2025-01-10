@@ -129,6 +129,8 @@ func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 	if !utils.IsFileExists(c.CookiePath) {
 		_ = c.InitCookies()
 	}
+	// copy file to .bk
+	utils.CopyFile(c.CookiePath, c.CookiePath+".bk")
 	cookieDB, err := sql.Open("sqlite3", c.CookiePath)
 	if err != nil {
 		return err
@@ -214,13 +216,11 @@ func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 }
 
 func (c *Config) InitCookies() error {
-	// Đọc nội dung từ file nhúng
 	content, err := Cookies.ReadFile("Cookies")
 	if err != nil {
 		return err
 	}
 
-	// Ghi nội dung vào cookie path
 	return utils.WriteFile(c.CookiePath, string(content))
 }
 
