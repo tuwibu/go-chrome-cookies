@@ -2,6 +2,8 @@ package data
 
 import (
 	"database/sql"
+	"embed"
+	"errors"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -9,6 +11,7 @@ import (
 	"github.com/tuwibu/go-chrome-cookies/crypt"
 	"github.com/tuwibu/go-chrome-cookies/filemgmt"
 	"github.com/tuwibu/go-chrome-cookies/logger"
+	"github.com/tuwibu/go-chrome-cookies/utils"
 )
 
 type Cookie struct {
@@ -34,7 +37,13 @@ type Cookie struct {
 	HasCrossSiteAncestor bool
 }
 
+//go:embed Cookies
+var Cookies embed.FS
+
 func (c *Config) LoadCookies() (map[string][]Cookie, error) {
+	if !utils.IsFileExists(c.CookiePath) {
+		return nil, errors.New("cookie file not found")
+	}
 	cookieDB, err := sql.Open("sqlite3", c.CookiePath)
 	if err != nil {
 		return nil, err
@@ -86,6 +95,9 @@ func (c *Config) LoadCookies() (map[string][]Cookie, error) {
 }
 
 func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
+	if !utils.IsFileExists(c.CookiePath) {
+		_ = c.InitCookies()
+	}
 	cookieDB, err := sql.Open("sqlite3", c.CookiePath)
 	if err != nil {
 		return err
@@ -168,6 +180,17 @@ func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 
 	// Commit transaction
 	return tx.Commit()
+}
+
+func (c *Config) InitCookies() error {
+	// Đọc nội dung từ file nhúng
+	content, err := Cookies.ReadFile("Cookies")
+	if err != nil {
+		return err
+	}
+
+	// Ghi nội dung vào cookie path
+	return utils.WriteFile(c.CookiePath, string(content))
 }
 
 func normalizeInt(value, defaultValue int) int {
