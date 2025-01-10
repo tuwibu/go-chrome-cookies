@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tuwibu/go-chrome-cookies/crypt"
+	"github.com/tuwibu/go-chrome-cookies/logger"
 	"github.com/tuwibu/go-chrome-cookies/utils"
 )
 
@@ -21,6 +22,7 @@ func getKey(folder string) string {
 	encryptedKey := strings.Split(localState, "encrypted_key\":\"")[1]
 	encryptedKey = strings.Split(encryptedKey, "\"")[0]
 	encryptedKey = strings.TrimSpace(encryptedKey)
+	logger.NewLogger().Infof("Encrypted key: %s", encryptedKey)
 	key, err := base64.StdEncoding.DecodeString(encryptedKey)
 	if err != nil {
 		return ""
