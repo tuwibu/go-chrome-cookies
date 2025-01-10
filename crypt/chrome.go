@@ -3,10 +3,16 @@ package crypt
 import (
 	"crypto/aes"
 	"crypto/cipher"
+
+	"github.com/tuwibu/go-chrome-cookies/throw"
 )
 
 func ChromeDecrypt(key, encryptPass []byte) ([]byte, error) {
-	return aesGCMDecrypt(encryptPass[15:], key, encryptPass[3:15])
+	if len(encryptPass) > 15 {
+		return aesGCMDecrypt(encryptPass[15:], key, encryptPass[3:15])
+	} else {
+		return nil, throw.ErrorPasswordIsEmpty()
+	}
 }
 
 func aesGCMDecrypt(encrypted, key, nonce []byte) ([]byte, error) {
