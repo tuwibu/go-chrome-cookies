@@ -8460,7 +8460,7 @@
       "KeyName": "PROFILE_ID",
       "Value": "anhtuvhs",
       "IsSecure": true,
-      "IsHTTPOnly": true,
+      "IsHTTPOnly": false,
       "HasExpire": true,
       "IsPersistent": true,
       "CreateDate": "2024-08-27T14:03:44.405591Z",
