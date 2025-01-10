@@ -7,11 +7,9 @@ import (
 	"testing"
 
 	"github.com/tuwibu/go-chrome-cookies/data"
-	"github.com/tuwibu/go-chrome-cookies/logger"
 )
 
 func TestEncrypt(t *testing.T) {
-	logger.InitLogger()
 	config := data.NewConfig("C:\\Users\\zorovhs\\.multiprofile\\user-data-dir\\532153507730427904-copy")
 	jsonData, err := os.ReadFile("a.json")
 	if err != nil {

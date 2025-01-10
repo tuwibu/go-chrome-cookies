@@ -1,6 +1,10 @@
 package data
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/tuwibu/go-chrome-cookies/logger"
+)
 
 type Config struct {
 	Folder     string
@@ -10,7 +14,7 @@ type Config struct {
 }
 
 func NewConfig(folder string) *Config {
-
+	logger.InitLogger()
 	return &Config{
 		Folder:     folder,
 		CookiePath: filepath.Join(folder, "Default", "Network", "Cookies"),
