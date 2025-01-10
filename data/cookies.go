@@ -125,6 +125,95 @@ func (c *Config) AddCookie(cookie Cookie) {
 	c.cookies[cookie.Host] = append(c.cookies[cookie.Host], cookie)
 }
 
+func (c *Config) Save() error {
+	if !utils.IsFileExists(c.CookiePath) {
+		_ = c.InitCookies()
+	}
+	// copy file to .bk
+	cookieDB, err := sql.Open("sqlite3", c.CookiePath)
+	if err != nil {
+		return err
+	}
+	defer cookieDB.Close()
+
+	// Bắt đầu transaction
+	tx, err := cookieDB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`
+		INSERT OR REPLACE INTO cookies 
+		(host_key, name, value, encrypted_value, path, creation_utc, expires_utc, 
+		is_secure, is_httponly, has_expires, is_persistent, last_access_utc, last_update_utc, 
+		top_frame_site_key, priority, samesite, source_scheme, source_port, source_type, 
+		has_cross_site_ancestor) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, cookieList := range c.cookies {
+		for _, cookie := range cookieList {
+			// Validate các trường quan trọng
+			if cookie.Host == "" || cookie.KeyName == "" || cookie.Path == "" {
+				continue // Skip invalid cookies
+			}
+
+			// Validate và normalize các giá trị số
+			priority := normalizeInt(cookie.Priority, 1)      // Default: 1
+			sameSite := normalizeInt(cookie.SameSite, -1)     // Default: -1
+			sourcePort := normalizeInt(cookie.SourcePort, -1) // Default: -1
+
+			// Mã hóa giá trị cookie
+			encryptValue, err := crypt.ChromeEncrypt([]byte(c.Key), []byte(cookie.Value))
+			if err != nil {
+				logger.NewLogger().Error(err)
+				continue
+			}
+
+			// Chuyển đổi thời gian sang Windows FILETIME format
+			createTime := filemgmt.TimeToWindowsEpoch(cookie.CreateDate)
+			expireTime := filemgmt.TimeToWindowsEpoch(cookie.ExpireDate)
+			lastAccessTime := filemgmt.TimeToWindowsEpoch(cookie.LastAccessDate)
+			lastUpdateTime := filemgmt.TimeToWindowsEpoch(cookie.LastUpdateDate)
+
+			_, err = stmt.Exec(
+				cookie.Host,
+				cookie.KeyName,
+				"", // Chrome luôn để trống trường value
+				encryptValue,
+				cookie.Path,
+				createTime,
+				expireTime,
+				filemgmt.BoolToInt(cookie.IsSecure),
+				filemgmt.BoolToInt(cookie.IsHTTPOnly),
+				filemgmt.BoolToInt(cookie.HasExpire),
+				filemgmt.BoolToInt(cookie.IsPersistent),
+				lastAccessTime,
+				lastUpdateTime,
+				cookie.TopFrameSiteKey,
+				priority,
+				sameSite,
+				cookie.SourceScheme,
+				sourcePort,
+				cookie.SourceType,
+				filemgmt.BoolToInt(cookie.HasCrossSiteAncestor),
+			)
+			if err != nil {
+				logger.NewLogger().Error(err)
+				return err
+			}
+		}
+	}
+
+	// Commit transaction
+	return tx.Commit()
+}
+
 func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 	if !utils.IsFileExists(c.CookiePath) {
 		_ = c.InitCookies()
