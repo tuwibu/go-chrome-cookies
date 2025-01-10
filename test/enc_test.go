@@ -1,23 +1,29 @@
-package main
+package test
 
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"testing"
 
 	"github.com/tuwibu/go-chrome-cookies/data"
 	"github.com/tuwibu/go-chrome-cookies/logger"
 )
 
-func main() {
+func TestEncrypt(t *testing.T) {
 	logger.InitLogger()
 	config := data.NewConfig("C:\\Users\\zorovhs\\.multiprofile\\user-data-dir\\532153507730427904-copy")
-	cookies, err := config.LoadCookies()
+	jsonData, err := os.ReadFile("a.json")
 	if err != nil {
 		fmt.Println(err)
 	}
-	jsonData, err := json.Marshal(cookies)
+	cookies := make(map[string][]data.Cookie)
+	err = json.Unmarshal(jsonData, &cookies)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(jsonData))
+	if err := config.SaveCookies(cookies); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Saved")
 }

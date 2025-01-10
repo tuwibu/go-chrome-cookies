@@ -36,12 +36,14 @@ func TimeEpochFormat(epoch int64) time.Time {
 	if epoch > maxTime {
 		return time.Date(2049, 1, 1, 1, 1, 1, 1, time.Local)
 	}
-	t := time.Date(1601, 1, 1, 0, 0, 0, 0, time.UTC)
-	d := time.Duration(epoch)
-	for i := 0; i < 1000; i++ {
-		t = t.Add(d)
-	}
-	return t
+
+	// Chuyển đổi từ Windows FILETIME (100-nanosecond intervals since January 1, 1601 UTC)
+	// sang Unix epoch (seconds since January 1, 1970 UTC)
+	epochMicros := (epoch - 116444736000000000) / 10 // Convert to microseconds
+	seconds := epochMicros / 1000000
+	micros := epochMicros % 1000000
+
+	return time.Unix(seconds, micros*1000)
 }
 
 func ReadFile(filename string) (string, error) {
@@ -112,4 +114,17 @@ func CloseFile() func(*os.File) {
 	return func(f *os.File) {
 		_ = f.Close()
 	}
+}
+
+func BoolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func TimeToWindowsEpoch(t time.Time) int64 {
+	// Chuyển từ Unix time sang Windows FILETIME
+	epochMicros := t.UnixMicro()
+	return (epochMicros * 10) + 116444736000000000
 }

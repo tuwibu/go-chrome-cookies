@@ -6,7 +6,7 @@ type Config struct {
 	Folder     string
 	Key        string
 	CookiePath string
-	cookies    map[string][]cookie
+	cookies    map[string][]Cookie
 }
 
 func NewConfig(folder string) *Config {
@@ -15,7 +15,7 @@ func NewConfig(folder string) *Config {
 		Folder:     folder,
 		CookiePath: filepath.Join(folder, "Default", "Network", "Cookies"),
 		Key:        getKey(folder),
-		cookies:    make(map[string][]cookie),
+		cookies:    make(map[string][]Cookie),
 	}
 }
 
