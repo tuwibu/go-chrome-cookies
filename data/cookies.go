@@ -130,7 +130,6 @@ func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 		_ = c.InitCookies()
 	}
 	// copy file to .bk
-	utils.CopyFile(c.CookiePath, c.CookiePath+".bk")
 	cookieDB, err := sql.Open("sqlite3", c.CookiePath)
 	if err != nil {
 		return err
