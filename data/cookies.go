@@ -94,6 +94,37 @@ func (c *Config) LoadCookies() (map[string][]Cookie, error) {
 	return c.cookies, nil
 }
 
+func (c *Config) AddCookie(cookie Cookie) {
+	// check if cookie.Host is in c.cookies
+	if _, ok := c.cookies[cookie.Host]; !ok {
+		c.cookies[cookie.Host] = []Cookie{}
+	}
+	// check if cookie.KeyName is in c.cookies[cookie.Host], rewrite if exist
+	for i, existingCookie := range c.cookies[cookie.Host] {
+		if existingCookie.KeyName == cookie.KeyName {
+			existingCookie.Value = cookie.Value
+			existingCookie.IsSecure = cookie.IsSecure
+			existingCookie.IsHTTPOnly = cookie.IsHTTPOnly
+			existingCookie.HasExpire = cookie.HasExpire
+			existingCookie.IsPersistent = cookie.IsPersistent
+			existingCookie.CreateDate = cookie.CreateDate
+			existingCookie.ExpireDate = cookie.ExpireDate
+			existingCookie.LastAccessDate = cookie.LastAccessDate
+			existingCookie.LastUpdateDate = cookie.LastUpdateDate
+			existingCookie.TopFrameSiteKey = cookie.TopFrameSiteKey
+			existingCookie.Priority = cookie.Priority
+			existingCookie.SameSite = cookie.SameSite
+			existingCookie.SourceScheme = cookie.SourceScheme
+			existingCookie.SourcePort = cookie.SourcePort
+			existingCookie.SourceType = cookie.SourceType
+			existingCookie.HasCrossSiteAncestor = cookie.HasCrossSiteAncestor
+			c.cookies[cookie.Host][i] = existingCookie
+			return
+		}
+	}
+	c.cookies[cookie.Host] = append(c.cookies[cookie.Host], cookie)
+}
+
 func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 	if !utils.IsFileExists(c.CookiePath) {
 		_ = c.InitCookies()
