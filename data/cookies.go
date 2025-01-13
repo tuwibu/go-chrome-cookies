@@ -85,10 +85,9 @@ func (c *Config) LoadCookies() (map[string][]Cookie, error) {
 			LastUpdateDate:  filemgmt.TimeEpochFormat(lastUpdateDate),
 		}
 		value, err = crypt.ChromeDecrypt([]byte(c.Key), encryptValue)
-		if err != nil {
-			logger.NewLogger().Error(err)
+		if err == nil {
+			cookie.Value = string(value)
 		}
-		cookie.Value = string(value)
 		c.cookies[host] = append(c.cookies[host], cookie)
 	}
 	return c.cookies, nil
@@ -103,6 +102,7 @@ func (c *Config) AddCookie(cookie Cookie) {
 	for i, existingCookie := range c.cookies[cookie.Host] {
 		if existingCookie.KeyName == cookie.KeyName {
 			existingCookie.Value = cookie.Value
+			// existingCookie.encryptValue = cookie.encryptValue
 			existingCookie.IsSecure = cookie.IsSecure
 			existingCookie.IsHTTPOnly = cookie.IsHTTPOnly
 			existingCookie.HasExpire = cookie.HasExpire
@@ -168,11 +168,14 @@ func (c *Config) Save() error {
 			sameSite := normalizeInt(cookie.SameSite, -1)     // Default: -1
 			sourcePort := normalizeInt(cookie.SourcePort, -1) // Default: -1
 
-			// Mã hóa giá trị cookie
-			encryptValue, err := crypt.ChromeEncrypt([]byte(c.Key), []byte(cookie.Value))
-			if err != nil {
-				logger.NewLogger().Error(err)
-				continue
+			encryptValue := cookie.encryptValue
+
+			if encryptValue == nil {
+				// Mã hóa giá trị cookie
+				encryptValue, err = crypt.ChromeEncrypt([]byte(c.Key), []byte(cookie.Value))
+				if err != nil {
+					continue
+				}
 			}
 
 			// Chuyển đổi thời gian sang Windows FILETIME format
@@ -256,12 +259,13 @@ func (c *Config) SaveCookies(cookies map[string][]Cookie) error {
 			priority := normalizeInt(cookie.Priority, 1)      // Default: 1
 			sameSite := normalizeInt(cookie.SameSite, -1)     // Default: -1
 			sourcePort := normalizeInt(cookie.SourcePort, -1) // Default: -1
-
-			// Mã hóa giá trị cookie
-			encryptValue, err := crypt.ChromeEncrypt([]byte(c.Key), []byte(cookie.Value))
-			if err != nil {
-				logger.NewLogger().Error(err)
-				continue
+			encryptValue := cookie.encryptValue
+			if encryptValue == nil {
+				// Mã hóa giá trị cookie
+				encryptValue, err = crypt.ChromeEncrypt([]byte(c.Key), []byte(cookie.Value))
+				if err != nil {
+					continue
+				}
 			}
 
 			// Chuyển đổi thời gian sang Windows FILETIME format
